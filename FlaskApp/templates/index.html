@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- HTML テンプレート内のリンク例 -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <title>Document</title>
+</head>
+<body>
+    <div class="main_container">
+        
+        <div class="header">
+            <span>Hello,{{current_user.username}}!!</span>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+        
+        <div class="button-container">
+            <radio class="button" id="menu_about">ABOUT</radio>
+            <radio class="button" id="menu_list">LIST</radio>
+            <radio class="button" id="menu_create">CREATE</radio>
+        </div>
+        
+        <div class="main">
+
+            <!--アバウトページに関する記述-->
+            <div id="about_box" class="box">
+                <h2>discription:</h2>
+                <span>
+                     this is commented about football related content.
+                    please feel free to note that the things you have noticed at football event.
+                    and you will learn how you should do for the purpose of becoming a good player. 
+                </span>
+            </div>
+            
+            <!--コメントリストページに関する記述-->
+            <div id="comment_box" class="box">
+
+            </div>
+
+            <!--クリエイトページに関する記述-->
+            <div id="create_box" class="box">
+                <form action="/api/data" method="post">
+                    <label  name="title">Title:</label>
+                    <input id="title" name="title"></input>
+                    <label for="comment">Comment:</label>
+                    <textarea id="comment" name="comment" rows="4" cols="50" required></textarea><br>                
+                    <button type="button" onclick="postComments()">Submit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!--alertの関数-->
+    <div id="custom_alert">
+        これはおしゃれなアラートです
+    </div>
+</body>
+
+<!--スクリプト部分-->
+<script>
+    //Dataをfetchするときの関数群やらいろいろ
+    async function fetchComments() {
+        try {
+            // コメントを表示する処理をここに追加
+            const commentsContainer = document.getElementById('comment_box');
+            commentsContainer.innerHTML = '';
+            const response = await fetch('/api/data');  // /api/dataに対する適切なエンドポイントを指定
+            const data = await response.json();
+            if(data.length > 0 ) {
+            data.forEach(comment => {
+                const commentDiv = document.createElement('span');
+                commentDiv.innerHTML = `
+                <p class='title'> ${comment.title}<p><br>
+                <p class='comment'> ${comment.comment}<p><br>
+                <p class='post_time'> ${comment.post_time}<p>
+                `;
+
+                commentsContainer.appendChild(commentDiv);
+            });
+            }else{
+               console.log("No Comments Available"); 
+            }
+            } catch (error) {
+                console.error('Error fetching comments:', error);
+            }
+            // fetchComments関数を呼び出してコメントを取得       
+    }
+    fetchComments();
+
+    async function postComments() {
+        try {
+            event.preventDefault();  // デフォルトのフォーム送信を防ぐ
+            const titleText = document.getElementById('title').value; 
+            const commentText = document.getElementById('comment').value;
+
+            const response = await fetch('/api/data', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',  // 適切なコンテンツタイプを指定
+                },
+                body: new URLSearchParams({
+                    'comment': commentText,
+                    'title':titleText
+                }),
+            });
+            const data = await response.json();
+            // POSTの結果に応じた処理をここに追加
+            console.log(data.message);
+            // コメントが投稿された後、コメント一覧を再取得して表示する
+            fetchComments();
+        } catch (error) {
+            console.error('Error posting comment:', error);
+        }
+        document.getElementById('title').value = '';
+        document.getElementById('comment').value = '';
+    }
+    //データをpostするときの記述。
+    //ここからはＳＰＡの切り替えに関する設定。
+    //イニシャル設定
+    document.getElementById('menu_about').classList.add('selected');
+    document.getElementById('about_box').classList.add('show');
+    //共通の初期化
+   //ボタンの描画を１回リセット
+   function resetMenubar() {
+        const Buttons = document.querySelectorAll('.button');
+        Buttons.forEach(function (element) {
+            element.classList.remove('selected');
+        });
+    }
+    //コンテントメニューのshowをいったん解除
+    function resetContent(){
+        const Boxes = document.querySelectorAll('.box');
+        Boxes.forEach(function (element) {
+            element.classList.remove('show');
+        });
+    }
+    function ResetPage(){
+        //全てのボタンとコンテントの描画、選択状態を解除します。
+        resetMenubar();
+        resetContent();
+    }
+    //aboutボタンが押されたときのイベントリスナー
+    function showAbout(){
+        ResetPage();
+        document.getElementById('menu_about').classList.add('selected');
+        document.getElementById('about_box').classList.add('show');
+    }
+    document.getElementById('menu_about').addEventListener('click',showAbout);
+    //listボタンが押されたときイベントリスナー
+    function showList(){
+        ResetPage();
+        document.getElementById('menu_list').classList.add('selected');
+        document.getElementById('comment_box').classList.add('show');
+    }
+    document.getElementById('menu_list').addEventListener('click',showList);
+    //Createボタンが押されたときのイベントリスナー
+    function showCreate(){
+        ResetPage();
+        document.getElementById('menu_create').classList.add('selected');
+        document.getElementById('create_box').classList.add('show');
+    }
+    document.getElementById('menu_create').addEventListener('click',showCreate);
+
+     // アラートを表示する関数
+    function showAlert() {
+        var alertElement = document.getElementById('custom-alert');
+        alertElement.style.display = 'block';
+
+        // 5秒後にアラートを非表示にする
+        setTimeout(function() {
+        alertElement.style.display = 'none';
+        }, 5000);
+    }
+
+    windows.onload = showAlert;
+</script>
+</html>
